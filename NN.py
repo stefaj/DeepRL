@@ -3,15 +3,13 @@ import dataset as ds
 import autograd.numpy as np  
 from autograd import grad    
 
+train_xs, train_ys = ([],[])
+for i in range(1,5):
+    (xs,ys) = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_%d' % i)
+    train_xs += xs
+    train_ys += ys
 
-train_xs, train_ys = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_1')
-train_xs2, train_ys2 = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_3')
-train_xs3, train_ys3 = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_4')
-train_xs = train_xs + train_xs2 + train_xs3
-train_ys = train_ys + train_ys2 + train_ys3
-
-
-test_xs,  test_ys = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_2')
+test_xs,  test_ys = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_5')
 
 train_ys = np.reshape(train_ys, (-1,1) )
 
