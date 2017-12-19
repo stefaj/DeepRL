@@ -41,17 +41,6 @@ def relu(z):
 def compute_activation(act, A, W, b):
     return act( np.dot(W,A) + b )
 
-def loss(yhat,y):
-    eps = 1e-18
-    loss = y * np.log(yhat + eps) + (1-y) * np.log(1-yhat + eps)
-    return -loss
-
-def cost(yhat,y ):
-    m = yhat.shape[1]
-    l = loss(yhat, y)
-    cost = np.squeeze(np.mean(l,axis=1))
-    return cost
-
 def init_weights(layers):
     weights = []
     for l in range(1,len(layers)):
@@ -67,6 +56,16 @@ def forward_pass(X, layers, weights):
         A_prev = A
     return A_prev
 
+def grad_descent(xs,ys,loss,net,weights):
+    fw = lambda W: forward_pass(xs, net, W)
+    l = lambda W: loss( fw(W), ys) 
+    
+    dw = grad(l)(weights)
+    for i in range(0,len(weights)):
+        weights[i][0] -= dw[i][0] * learning_rate
+        weights[i][1] -= dw[i][1] * learning_rate
+    return (l(weights), weights)
+
 net = create_input(3072)
 net = add_forward(net, 128, relu)
 net = add_forward(net, 128, relu)
@@ -79,24 +78,25 @@ weights = init_weights(net)
 batch_size = 64
 chunks = int(len(train_xs) / batch_size)
 
-for _ in range(0,1000):
+def cost(yhat,y ):
+    eps = 1e-18
+    loss = -(y * np.log(yhat + eps) + (1-y) * np.log(1-yhat + eps))
+    m = yhat.shape[1]
+    cost = np.squeeze(np.mean(loss,axis=1))
+    return cost
+
+for epoch in range(0,1000):
     
+    losses = []
     for item in np.array_split(list(zip(train_xs, train_ys)), chunks):
         batch_xs = [ i[0] for i in item]
         batch_ys = [ i[1] for i in item]
         batch_xs = np.transpose(batch_xs)
         batch_ys = np.transpose(batch_ys).reshape( (1,-1) )
+        c, weights = grad_descent(batch_xs, batch_ys, cost, net, weights)
+        losses.append(c)
 
-        fw = lambda W: forward_pass(batch_xs, net, W)
-        l = lambda W: cost( fw(W), batch_ys) 
-
-        dw = grad(l)(weights)
-        dw = np.nan_to_num(dw)
-        for i in range(0,len(weights)):
-            weights[i][0] -= dw[i][0] * learning_rate
-            weights[i][1] -= dw[i][1] * learning_rate
-
-    print('is loss', l(weights))
+    print('epoch %d is loss %f' % (epoch, np.mean(losses) ) )
     print('os loss', cost( forward_pass(test_xs, net, weights), test_ys ) )
 
 print('loss', l(weights))
