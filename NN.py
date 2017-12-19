@@ -13,13 +13,11 @@ train_ys = train_ys + train_ys2 + train_ys3
 
 test_xs,  test_ys = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_2')
 
-# train_xs = np.transpose(train_xs)
-# train_ys = np.transpose(train_ys).reshape( (1,1000) )
-train_ys = np.reshape(train_ys, (3000,1) )
+train_ys = np.reshape(train_ys, (-1,1) )
 
 
 test_xs = np.transpose(test_xs)
-test_ys = np.transpose(test_ys).reshape( (1,1000) )
+test_ys = np.transpose(test_ys).reshape( (1,-1) )
 
 def create_input(size):
     return [{'dim':size, 'act': identity}]
@@ -52,8 +50,6 @@ def cost(yhat,y ):
     m = yhat.shape[1]
     l = loss(yhat, y)
     cost = np.squeeze(np.mean(l,axis=1))
-    # cost = -1.0 / m * np.sum( y * np.log(yhat + eps) + (1-y) * np.log(1-yhat + eps) )
-
     return cost
 
 def init_weights(layers):
@@ -71,15 +67,10 @@ def forward_pass(X, layers, weights):
         A_prev = A
     return A_prev
 
-
-# 
-# 
-# def backward_pass(
-
-
 net = create_input(3072)
-net = add_forward(net, 100, relu)
-net = add_forward(net, 50, relu)
+net = add_forward(net, 128, relu)
+net = add_forward(net, 128, relu)
+net = add_forward(net, 128, relu)
 net = add_forward(net, 1, sigmoid)
 learning_rate = 0.001
 
@@ -104,17 +95,8 @@ for _ in range(0,1000):
         for i in range(0,len(weights)):
             weights[i][0] -= dw[i][0] * learning_rate
             weights[i][1] -= dw[i][1] * learning_rate
-# train_xs = np.transpose(train_xs)
-# train_ys = np.transpose(train_ys).reshape( (1,1000) )
 
-
-    print('in sample loss', l(weights))
-    # print('os loss', cost( forward_pass(test_xs, net, weights), test_ys ) )
+    print('is loss', l(weights))
+    print('os loss', cost( forward_pass(test_xs, net, weights), test_ys ) )
 
 print('loss', l(weights))
-
-# print(a)
-# print(a.shape)
-# print(train_ys)
-# print(loss(a,train_ys) )
-
