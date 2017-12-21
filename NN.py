@@ -1,21 +1,5 @@
-import dataset as ds
-
 import autograd.numpy as np  
 from autograd import grad    
-
-train_xs, train_ys = ([],[])
-for i in range(1,5):
-    (xs,ys) = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_%d' % i)
-    train_xs += xs
-    train_ys += ys
-
-test_xs,  test_ys = ds.random_cat_sample('dataset/cifar-10-batches-py/data_batch_5')
-
-train_ys = np.reshape(train_ys, (-1,1) )
-
-
-test_xs = np.transpose(test_xs)
-test_ys = np.transpose(test_ys).reshape( (1,-1) )
 
 def create_input(size):
     return [{'dim':size, 'act': identity}]
@@ -54,7 +38,7 @@ def forward_pass(X, layers, weights):
         A_prev = A
     return A_prev
 
-def grad_descent(xs,ys,loss,net,weights):
+def grad_descent(xs,ys,loss,net,weights, learning_rate=0.001):
     fw = lambda W: forward_pass(xs, net, W)
     l = lambda W: loss( fw(W), ys) 
     
@@ -64,37 +48,3 @@ def grad_descent(xs,ys,loss,net,weights):
         weights[i][1] -= dw[i][1] * learning_rate
     return (l(weights), weights)
 
-net = create_input(3072)
-net = add_forward(net, 128, relu)
-net = add_forward(net, 128, relu)
-net = add_forward(net, 128, relu)
-net = add_forward(net, 1, sigmoid)
-learning_rate = 0.001
-
-weights = init_weights(net)
-
-batch_size = 64
-chunks = int(len(train_xs) / batch_size)
-
-def cost(yhat,y ):
-    eps = 1e-18
-    loss = -(y * np.log(yhat + eps) + (1-y) * np.log(1-yhat + eps))
-    m = yhat.shape[1]
-    cost = np.squeeze(np.mean(loss,axis=1))
-    return cost
-
-for epoch in range(0,1000):
-    
-    losses = []
-    for item in np.array_split(list(zip(train_xs, train_ys)), chunks):
-        batch_xs = [ i[0] for i in item]
-        batch_ys = [ i[1] for i in item]
-        batch_xs = np.transpose(batch_xs)
-        batch_ys = np.transpose(batch_ys).reshape( (1,-1) )
-        c, weights = grad_descent(batch_xs, batch_ys, cost, net, weights)
-        losses.append(c)
-
-    print('epoch %d is loss %f' % (epoch, np.mean(losses) ) )
-    print('os loss', cost( forward_pass(test_xs, net, weights), test_ys ) )
-
-print('loss', l(weights))
